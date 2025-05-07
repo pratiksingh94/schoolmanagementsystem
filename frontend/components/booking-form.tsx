@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,6 +14,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import api from "@/lib/axios";
+import { useRouter } from "next/navigation";
 
 interface BookingFormProps {
   isOpen: boolean;
@@ -22,6 +23,7 @@ interface BookingFormProps {
 }
 
 export function BookingForm({ isOpen, onClose, planName }: BookingFormProps) {
+  const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -34,15 +36,48 @@ export function BookingForm({ isOpen, onClose, planName }: BookingFormProps) {
   });
 
   const [bookingID, setBookingID] = useState("");
+  const [userID, setUserID] = useState("");
+
+  useEffect(() => {
+    const getUserDetails = async () => {
+      const res = await api.get("/api/auth/profile");
+      setFormData({
+        name: res.data.name,
+        email: res.data.email,
+        phone: "",
+        schoolName: "",
+        address: ""
+      })
+      setUserID(res.data._id)
+    }
+
+    if(localStorage.getItem('token')) {
+      getUserDetails();
+    }
+  }, [])
+  
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     //setIsLoading(true)
+    if(userID === "") {
+      toast({
+        title: "Login or create an account first",
+        description: "You need an account to create booking. Redirecting...",
+        variant: "destructive",
+      });
+
+      setTimeout(() => {
+        router.push('/auth/login')
+      }, 5000)
+    } else {
+
     try {
       const res = await api.post("/api/bookings", {
         ...formData,
         plan: planName,
         status: "pending",
+        user: userID
       });
       setBookingID(res.data._id);
       // console.log(res.data._id)
@@ -50,6 +85,7 @@ export function BookingForm({ isOpen, onClose, planName }: BookingFormProps) {
       // alert('Booking submitted successfully!');
       handlePayment(res.data._id);
       onClose();
+
 
       setFormData({
         name: "",
@@ -67,6 +103,7 @@ export function BookingForm({ isOpen, onClose, planName }: BookingFormProps) {
       });
     } finally {
       //setIsLoading(false)
+    }
     }
   };
 
@@ -87,7 +124,7 @@ export function BookingForm({ isOpen, onClose, planName }: BookingFormProps) {
     });
   };
 
-  const handlePayment = async (id) => {
+  const handlePayment = async (id: any) => {
     const res = await loadRazorpayScript();
 
     if (!res) {
@@ -142,7 +179,7 @@ export function BookingForm({ isOpen, onClose, planName }: BookingFormProps) {
           toast({
             title: "Payment Successful",
             description: "Your booking has been created successfully",
-            className: "bg-green-500"
+            className: "bg-green-500",
           });
 
           setFormData({
@@ -153,8 +190,10 @@ export function BookingForm({ isOpen, onClose, planName }: BookingFormProps) {
             address: "",
           });
           onClose();
+      router.push('/user-dashboard')
+
         } else {
-          console.log(453454864534845448785485453)
+          //console.log(453454864534845448785485453);
           toast({
             title: "Verification Failed",
             description: "Payment could not be verified. Booking canceled.",
@@ -165,16 +204,16 @@ export function BookingForm({ isOpen, onClose, planName }: BookingFormProps) {
         setIsLoading(false);
       },
       modal: {
-      ondismiss: async () => {
-        toast({
-          title: "Payment Cancelled",
-          description: "Payment was cancelled. Booking will be removedd.",
-          variant: "destructive",
-        });
+        ondismiss: async () => {
+          toast({
+            title: "Payment Cancelled",
+            description: "Payment was cancelled. Booking will be removedd.",
+            variant: "destructive",
+          });
 
-        await api.delete(`/api/bookings/${id}`);
-    },
-  },
+          await api.delete(`/api/bookings/${id}`);
+        },
+      },
       prefill: {
         name: formData.name,
         email: formData.email,

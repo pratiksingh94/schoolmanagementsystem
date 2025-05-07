@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   GraduationCap,
@@ -14,8 +15,10 @@ import {
   BarChart,
   CheckCircle2,
   Menu,
+  LogOut,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useToast } from "@/hooks/use-toast";
 
 const fadeInUp = {
   initial: { opacity: 0, y: 50 },
@@ -24,9 +27,13 @@ const fadeInUp = {
 };
 
 export default function Home() {
+  const router = useRouter();
+  const { toast } = useToast();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true);
     const checkAdmin = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -46,6 +53,18 @@ export default function Home() {
 
     checkAdmin();
   }, []);
+
+  const handleLogout = () => {
+    if (isClient) {
+      localStorage.removeItem("token");
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out",
+        className: "bg-blue-500",
+      });
+      router.push("/auth/login");
+    }
+  };
 
   return (
     <div className="min-h-screen">
@@ -67,16 +86,32 @@ export default function Home() {
               <Link href="#faq" className="text-muted-foreground hover:text-foreground">
                 FAQ
               </Link>
-              <Link href="/pricing" className="text-muted-foreground hover:text-foreground">
+              <Link href="/contact" className="text-muted-foreground hover:text-foreground">
                 Contact
               </Link>
               <Link href="/pricing" className="text-muted-foreground hover:text-foreground">
                 Pricing
               </Link>
-              {isAdmin ? (
-                <Link href="/dashboard">
-                  <Button>Dashboard</Button>
-                </Link>
+              {isClient && localStorage.getItem("token") ? (
+                <div className="flex items-center space-x-4">
+                  {isAdmin ? (
+                    <Link href="/dashboard">
+                      <Button>Dashboard</Button>
+                    </Link>
+                  ) : (
+                    <Link href="/user-dashboard">
+                      <Button>My Account</Button>
+                    </Link>
+                  )}
+                  <Button
+                    variant="outline"
+                    onClick={handleLogout}
+                    className="flex items-center gap-2"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Logout
+                  </Button>
+                </div>
               ) : (
                 <>
                   <Link href="/auth/login">
@@ -306,7 +341,7 @@ export default function Home() {
             viewport={{ once: true }}
           >
             <Button size="lg" asChild>
-              <Link href="/pricing">Contact Sales</Link>
+              <Link href="/contact">Contact Sales</Link>
             </Button>
             <Button size="lg" variant="outline" asChild>
               <Link href="/pricing">View Pricing</Link>

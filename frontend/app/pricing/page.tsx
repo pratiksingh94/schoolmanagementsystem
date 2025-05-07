@@ -68,42 +68,44 @@ export default function Pricing() {
 
         <div className="grid md:grid-cols-3 gap-8">
           {plans.map((plan) => (
-          <motion.div
-                    key={plan.name}
-                    initial={{ opacity: 0, y: 50 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, amount: 0.2 }}
-                    transition={{ duration: 0.5 }}
-                    className="p-4 rounded-lg flex items-center justify-between bg-card"
+            <motion.div
+              key={plan.name}
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 0.5 }}
+              className="p-4 rounded-lg flex items-center justify-between bg-card"
+            >
+              <Card key={plan.name} className="relative">
+                <CardHeader>
+                  <CardTitle className="text-2xl">{plan.name}</CardTitle>
+                  <div className="mt-4">
+                    <span className="text-4xl font-bold">{plan.price}</span>
+                    {plan.price !== "Custom" && (
+                      <span className="text-muted-foreground">/month</span>
+                    )}
+                  </div>
+                  <p className="text-muted-foreground mt-2">
+                    {plan.description}
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-4">
+                    {plan.features.map((feature, index) => (
+                      <li key={index} className="flex items-center">
+                        <Check className="h-5 w-5 text-primary mr-2" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button
+                    className="w-full mt-6"
+                    onClick={() => handleGetStarted(plan.name)}
                   >
-            <Card key={plan.name} className="relative">
-              <CardHeader>
-                <CardTitle className="text-2xl">{plan.name}</CardTitle>
-                <div className="mt-4">
-                  <span className="text-4xl font-bold">{plan.price}</span>
-                  {plan.price !== "Custom" && (
-                    <span className="text-muted-foreground">/month</span>
-                  )}
-                </div>
-                <p className="text-muted-foreground mt-2">{plan.description}</p>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-4">
-                  {plan.features.map((feature, index) => (
-                    <li key={index} className="flex items-center">
-                      <Check className="h-5 w-5 text-primary mr-2" />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Button
-                  className="w-full mt-6"
-                  onClick={() => handleGetStarted(plan.name)}
-                >
-                  Get Started
-                </Button>
-              </CardContent>
-            </Card>
+                    Get Started
+                  </Button>
+                </CardContent>
+              </Card>
             </motion.div>
           ))}
         </div>
